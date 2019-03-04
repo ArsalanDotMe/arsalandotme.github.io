@@ -1,0 +1,26 @@
+{
+  "name": "arsalandotme.github.io",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "browser-sync start --server --files ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ArsalanDotMe/arsalandotme.github.io.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ArsalanDotMe/arsalandotme.github.io/issues"
+  },
+  "homepage": "https://github.com/ArsalanDotMe/arsalandotme.github.io#readme",
+  "dependencies": {
+    "light-server": "^2.6.0"
+  },
+  "devDependencies": {
+    "browser-sync": "^2.26.3"
+  }
+}
