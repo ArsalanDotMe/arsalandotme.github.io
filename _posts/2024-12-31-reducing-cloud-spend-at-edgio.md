@@ -1,12 +1,12 @@
 ---
 layout: post
-title: Reducing Cloud Spend At Edgio (Part One)
+title: How I reduced Log Shipping Cost by 90%
 mermaid: true
 ---
 
 # Brief intro
 
-In 2022, I joined Edgio as a lead Cloud Engineer. Although I had extensive experience with cloud providers like AWS and Azure, Edgio presented new challenges that pushed the limits of my knowledge. Shortly after I joined, the company faced financial difficulties, and my focus shifted to identifying cost optimization opportunities within our cloud infrastructure. I'm writing this blog post because the end result was far better than anyone could expect and I was able to achieve more than 90% savings related to log streaming and shipping! These changes allowed Edgio to save hundreds of thousands of dollars for log shipping across all our customers. 
+In 2022, I joined Edgio as a lead Cloud Engineer. Although I had extensive experience with cloud providers like AWS and Azure, Edgio presented new challenges that pushed the limits of my knowledge. Shortly after I joined, the company faced financial difficulties, and my focus shifted to identifying cost optimization opportunities within our cloud infrastructure. I'm writing this blog post because the end result was far better than anyone could expect and I was able to achieve **more than 90% savings related to log streaming and shipping!** These changes allowed Edgio to save hundreds of thousands of dollars for log shipping across all our customers. 
 
 This first blog post focuses on the work I did around logs but there are optimizations that I led that brought overall platform cost to below 50% of its previous cost. 
 
@@ -43,7 +43,7 @@ flowchart LR
 Browser <--> WS
 WS == invokes lambda ==> LSL
 %% Config path
-LSL -. streams logs from Cloudwatch .-> CloudWatch
+LSL -. streams logs from CloudWatch .-> CloudWatch
 %% End Config Path
 
 UserLambda --> CloudWatch
@@ -53,8 +53,8 @@ LSL --> WS
 #### Data Flow
 
 1. When an end-user goes to the edgio console and starts log streaming for one of their deployments, their browser makes a websocket connection to AWS API gateway.
-2. The API gateway invokes the Logs Streamer Lambda which starts up and streams logs from Cloudwatch. In practice, it had to stream logs at least 10 seconds in the past because if you query for any more recent logs, there is a chance of missing logs which are not processed yet by Cloudwatch. 
-3. As it detects new logs from Cloudwatch, it pushes the logs to the web socket connection via API gateway.
+2. The API gateway invokes the Logs Streamer Lambda which starts up and streams logs from CloudWatch. In practice, it had to stream logs at least 10 seconds in the past because if you query for any more recent logs, there is a chance of missing logs which are not processed yet by CloudWatch. 
+3. As it detects new logs from CloudWatch, it pushes the logs to the web socket connection via API gateway.
 4. The console UI receives the logs via web socket and displays them in the UI. 
 
 This architecture already fulfills requirement 1 which is to enable real-time streaming of logs but I needed to also fulfill the second requirement to ship logs to external destinations. 
@@ -77,7 +77,7 @@ flowchart LR
 Browser <--> WS
 WS == invokes lambda ==> LSL
 %% Config path
-LSL -. streams logs from Cloudwatch .-> CloudWatch
+LSL -. streams logs from CloudWatch .-> CloudWatch
 %% End Config Path
 
 UserLambda --> CloudWatch
@@ -99,13 +99,13 @@ ShipperLambda --> ExternalDestinations[External Destinations]
 
 ```
 
-This design uses the (best practices)[https://aws.amazon.com/blogs/architecture/stream-amazon-Cloudwatch-logs-to-a-centralized-account-for-audit-and-analysis/] and would be very scalable and easy to maintain once setup. 
+This design uses the (best practices)[https://aws.amazon.com/blogs/architecture/stream-amazon-CloudWatch-logs-to-a-centralized-account-for-audit-and-analysis/] and would be very scalable and easy to maintain once setup. 
 
-BUT, here's why I felt unsatisfied with the whole architecture. The cloud function infrastructure is deployed to separate AWS accounts belonging to each enterprise customer and while digging around the costs for the AWS account associated with one of our larger customers, it almost caused me physical pain to see that we were paying $10,000+ just for Cloudwatch data processing fees per month. We were not even using Cloudwatch to query the logs, setup alerts or collect metrics. Cloudwatch was literally just the default medium of transport and it pained me to see that it cost so much. 
+BUT, here's why I felt unsatisfied with the whole architecture. The cloud function infrastructure is deployed to separate AWS accounts belonging to each enterprise customer and while digging around the costs for the AWS account associated with one of our larger customers, it almost caused me physical pain to see that we were paying $10,000+ just for CloudWatch data processing fees per month. We were not even using CloudWatch to query the logs, setup alerts or collect metrics. CloudWatch was literally just the default medium of transport and it pained me to see that it cost so much. 
 
 # Rethinking the whole architecture
 
-I stepped back a little bit and questioned whether we could find some other medium of collecting and transporting logs that was cheaper than using Cloudwatch. The solution had to support both the real-time log streaming usecase and the log shipping usecase, and the added complexity of any other solution would be clearly worth-it only if I could reduce costs by 40% or more. The performance must also not degrade for the existing real-time log streaming feature. 
+I stepped back a little bit and questioned whether we could find some other medium of collecting and transporting logs that was cheaper than using CloudWatch. The solution had to support both the real-time log streaming usecase and the log shipping usecase, and the added complexity of any other solution would be clearly worth-it only if I could reduce costs by 40% or more. The performance must also not degrade for the existing real-time log streaming feature. 
 
 ### Collecting Logs
 
@@ -153,7 +153,7 @@ LogsShipperLambda --> ExternalDestinations[External Destinations]
 
 ```
 
-This architecture has a few problems like variable latency depending on the amount of logs generated (latency is reduced for high throughput of logs, and latency could be quite high for low throughput) but it cannot be argued that this architecture is extremely cheap. The main cost components are SQS and the logs shipper lambda. If we're just comparing cost of the logs shipping medium, to ship the same amount of logs, SQS gives us a cost saving of over 95%. It is practically free compared to Cloudwatch.
+This architecture has a few problems like variable latency depending on the amount of logs generated (latency is reduced for high throughput of logs, and latency could be quite high for low throughput) but it cannot be argued that this architecture is extremely cheap. The main cost components are SQS and the logs shipper lambda. If we're just comparing cost of the logs shipping medium, to ship the same amount of logs, SQS gives us a cost saving of over 95%. It is practically free compared to CloudWatch.
 
 ## Real-time Log Streaming
 
@@ -206,7 +206,7 @@ When the logs streamer lambda starts up, it sets a configuration in the configur
 
 Meanwhile, on each invokation/request, the lambda extension lazily checks the configuration and if it finds that log streaming is enabled for that deployment, it starts sending each log line to a dynamodb table in real-time without any buffering. On the other side of the equation, the log streamer lambda can just read logs as they are written in the dynamodb table and send those logs to the API gateway websocket connection. Log streaming is always enabled with a deadline and the log streamer lambda disables log streaming when the web socket connection is closed.
 
-This system works brilliantly because it activates only when needed and turns off automatically as soon as it is not needed anymore. Using dynamodb as a fast logs medium allows us to use an extremely fast, very cost-effective, highly scalable system that we can pay only for usage. Even better is that querying cloudwatch for logs less than 10 seconds old often lead to missed logs. But the dynamodb table allowed us to confidently stream logs in real-time instead of with a 10 second delay with Cloudwatch. 
+This system works brilliantly because it activates only when needed and turns off automatically as soon as it is not needed anymore. Using dynamodb as a fast logs medium allows us to use an extremely fast, very cost-effective, highly scalable system that we can pay only for usage. Even better is that querying cloudwatch for logs less than 10 seconds old often lead to missed logs. But the dynamodb table allowed us to confidently stream logs in real-time instead of with a 10 second delay with CloudWatch. 
 
 There is a cost for checking the configuration table for whether or not log streaming is enabled but with some debouncing and caching, the cost remains in single digits even for our larger customers and there is almost no noticeable cost for using the log streaming table because the feature is used sparingly. 
 
@@ -214,4 +214,4 @@ There is a cost for checking the configuration table for whether or not log stre
 
 Cloud platforms like AWS are wonderful and allow companies to grow very fast by providing robust managed services. But, the cloud is also a casino. You can often not predict what the bill is going to be like at the end of the day and there are almost always unexpected costs. In this case, the cost of cloudwatch was very high for our usecase and by thinking out of the box, I managed to come up with a new architecture that achieved hundreds of thousands of dollars in cost savings for the company per year. 
 
-The new architecture is a bit more complex than before, and is suitable perhaps only for Edgio but it demonstrates the fact that if you start digging deeper within your cloud architecture, you may just find huge cost savings. 
+The new architecture is a bit more complex than before, and is suitable perhaps only for Edgio but it demonstrates the fact that if you start digging deeper within your cloud architecture, you might just uncover similar opportunities and save big on cloud spend!
