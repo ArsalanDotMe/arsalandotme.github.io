@@ -1,14 +1,13 @@
 ---
 layout: post
-title: How I reduced Log Shipping Cost by 90%
+title: "Drastically Reducing Cloud Spend at Edgio"
 mermaid: true
+description: "How I managed to achieve more than 90% savings in the cloud spend when I started digging deeper into the architecture of a feature I was working on. These changes allowed Edgio to save hundreds of thousands of dollars for log shipping across all our customers."
 ---
 
 # Brief intro
 
-In 2022, I joined Edgio as a lead Cloud Engineer. Although I had extensive experience with cloud providers like AWS and Azure, Edgio presented new challenges that pushed the limits of my knowledge. Shortly after I joined, the company faced financial difficulties, and my focus shifted to identifying cost optimization opportunities within our cloud infrastructure. I'm writing this blog post because the end result was far better than anyone could expect and I was able to achieve **more than 90% savings related to log streaming and shipping!** These changes allowed Edgio to save hundreds of thousands of dollars for log shipping across all our customers. 
-
-This first blog post focuses on the work I did around logs but there are optimizations that I led that brought overall platform cost to below 50% of its previous cost. 
+This is my first blog post in what I hope to be a series of blog posts about the some of the more interesting work I've done and things I've learnt. In this post, I'll be talking about how I managed to to achieve **more than 90% savings in the cloud spend** when I started digging deeper into the architecture of a feature I was working on. These changes allowed Edgio to save hundreds of thousands of dollars for log shipping across all our customers. I hope it serves as an inspiration for others to look deeper into their cloud architecture and find similar opportunities.
 
 
 # What are Cloud Functions?
@@ -99,7 +98,7 @@ ShipperLambda --> ExternalDestinations[External Destinations]
 
 ```
 
-This design uses the (best practices)[https://aws.amazon.com/blogs/architecture/stream-amazon-CloudWatch-logs-to-a-centralized-account-for-audit-and-analysis/] and would be very scalable and easy to maintain once setup. 
+This design uses the [best practices](https://aws.amazon.com/blogs/architecture/stream-amazon-CloudWatch-logs-to-a-centralized-account-for-audit-and-analysis/) and would be very scalable and easy to maintain once setup. 
 
 BUT, here's why I felt unsatisfied with the whole architecture. The cloud function infrastructure is deployed to separate AWS accounts belonging to each enterprise customer and while digging around the costs for the AWS account associated with one of our larger customers, it almost caused me physical pain to see that we were paying $10,000+ just for CloudWatch data processing fees per month. We were not even using CloudWatch to query the logs, setup alerts or collect metrics. CloudWatch was literally just the default medium of transport and it pained me to see that it cost so much. 
 
