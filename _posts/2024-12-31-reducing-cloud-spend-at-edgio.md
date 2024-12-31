@@ -3,11 +3,14 @@ layout: post
 title: "Drastically Reducing Cloud Spend at Edgio"
 mermaid: true
 description: "How I managed to achieve more than 90% savings in the cloud spend when I started digging deeper into the architecture of a feature I was working on. These changes allowed Edgio to save hundreds of thousands of dollars for log shipping across all our customers."
+image:
+  path: assets/img/titles/reducing-cloud-spend-title.jpeg
+  alt: Title image for the blog post
 ---
 
 # Brief intro
 
-This is my first blog post in what I hope to be a series of blog posts about the some of the more interesting work I've done and things I've learnt. In this post, I'll be talking about how I managed to to achieve **more than 90% savings in the cloud spend** for a specific area of the product. These changes allowed [Edgio](https://edg.io/applications/sites/) to save hundreds of thousands of dollars for log shipping across all our customers. I hope it serves as an inspiration for others to look deeper into their cloud architecture and find similar opportunities.
+This is my first blog post in what I hope to be a series of blog posts about the some of the more interesting work I've done and things I've learnt. In this post, I'll be talking about how I managed to to achieve **more than 90% savings in the cloud spend** for a specific area of the product at Edgio. These changes allowed [Edgio](https://edg.io/applications/sites/) to save hundreds of thousands of dollars for log shipping across all our customers. I hope it serves as an inspiration for others to look deeper into their cloud architecture and find similar opportunities.
 
 
 # What are Cloud Functions?
