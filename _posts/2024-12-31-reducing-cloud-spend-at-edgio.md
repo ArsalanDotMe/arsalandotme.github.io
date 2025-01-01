@@ -129,7 +129,7 @@ I looked at some existing lambda extensions that ship logs from the lambda to ex
 
 In order for the lambda extension to not add any additional increase in billed duration, it needs to not delay the lambda suspension and send logs to a destination with as little latency as possible. I chose SQS for this because pushing a message to SQS is almost instantaneous from within a lambda, the service is quite cheap, is almost inifinitely scalable, and you only pay for usage. 
 
-### New Architecture
+### New Architecture for Log Shipping
 
 In our log shipping usecase, we didn't have a strict latency requirement. If it took up to a few minutes for logs to be shipped, that was acceptable. So, to further minimize the cost of SQS, the lambda extension removes sensitive data from logs and buffers the logs until either a certain amount of time has passed since last push or until 64KB of logs is accumulated. 64KB is the maximum payload of an SQS message and your cost of SQS usage is the same whether you are sending 1KB or 64KB so it makes sense to make the most out of that quota and send as few messages as possible. 
 
@@ -169,7 +169,7 @@ Real-time streaming is used by our customers to stream logs for their deployed w
 
 Making our lambda extension delay the suspension of the lambda worker was unacceptable for two reasons. The first being that any additional time would be billed and cut into the savings. The second and more important reason was that we execute the lambda using a synchronous invocation with `LogType: Tail`. When you specify that option, the lambda API gives you back the response not when the lambda code itself has returned a response but when the response has been sent and the lambda extension has signalled that it is finished with its processing. That would mean any additional delay on receiving logs and sending them to SQS would also increase the response latency to the end users. 
 
-So, I came up with an architecture that adds the required delay (about 30-80ms in practice) **only** when someone was actually streaming the logs in the console. Otherwise, there is no additional delay or cost. 
+So, I came up with an architecture that adds the required delay (about 30-80ms in practice) **only** when someone was actually streaming the logs in the console. Otherwise, there is no additional delay or cost. That delay is unfortunately necessary because the logs are not available in the lambda extension until the lambda has finished executing. Later, we moved away from using the `LogType: Tail` and so the delay no longer causes any additional latency for the end users.
 
 Here's the new architecture.
 
