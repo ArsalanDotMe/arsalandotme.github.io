@@ -129,6 +129,30 @@ I looked at some existing lambda extensions that ship logs from the lambda to ex
 
 In order for the lambda extension to not add any additional increase in billed duration, it needs to not delay the lambda suspension and send logs to a destination with as little latency as possible. I chose SQS for this because pushing a message to SQS is almost instantaneous from within a lambda, the service is quite cheap, is almost inifinitely scalable, and you only pay for usage. 
 
+### Disabling Cloudwatch
+
+Most AWS services just output logs to CloudWatch by default. There is no switch that you can turn off in order to prevent a service from sending logs to CloudWatch. The only to do that is to disallow the IAM Role that the service is using to write logs to CloudWatch.
+
+Here's an example of a IAM Policy that disables logging to CloudWatch.
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Deny",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": "<your resource arn>"
+        }
+    ]
+}
+```
+
+
 ### New Architecture for Log Shipping
 
 In our log shipping usecase, we didn't have a strict latency requirement. If it took up to a few minutes for logs to be shipped, that was acceptable. So, to further minimize the cost of SQS, the lambda extension removes sensitive data from logs and buffers the logs until either a certain amount of time has passed since last push or until 64KB of logs is accumulated. 64KB is the maximum payload of an SQS message and your cost of SQS usage is the same whether you are sending 1KB or 64KB so it makes sense to make the most out of that quota and send as few messages as possible. 
