@@ -8,7 +8,7 @@ When installing the [**Chirpy**][chirpy] theme through [RubyGems.org][gem], Jeky
 from the theme's gem. If you have ever installed this theme gem, you can use the command
 `bundle info --path jekyll-theme-chirpy` to locate these files.
 
-The Jekyll team claims that this is to leave the ball in the user’s court, but this also results in users not being
+The Jekyll team claims that this is to leave the ball in the user's court, but this also results in users not being
 able to enjoy the out-of-the-box experience when using feature-rich themes.
 
 To fully use all the features of **Chirpy**, you need to copy the other critical files from the theme's gem to your
@@ -28,6 +28,36 @@ latest version of the **Chirpy** theme and the [CD][CD] workflow to here, so tha
 ## Usage
 
 Check out the [theme's docs](https://github.com/cotes2020/jekyll-theme-chirpy/wiki).
+
+## Local Development
+
+To run this Jekyll site locally:
+
+1. Install the dependencies:
+   ```shell
+   bundle install
+   ```
+
+2. Start the Jekyll server:
+   ```shell
+   bundle exec jekyll serve --livereload
+   ```
+   
+   Alternatively, you can use npm:
+   ```shell
+   npm run dev
+   ```
+
+3. Access the site at:
+   ```
+   http://127.0.0.1:4000/
+   ```
+
+The server is running with live reload enabled, so any changes you make to your files will automatically refresh the browser. Press Ctrl+C in the terminal when you want to stop the server.
+
+Additional npm scripts:
+- `npm run build`: Build the site for production
+- `npm run clean`: Clean the generated site files
 
 ## Contributing
 
