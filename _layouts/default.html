@@ -7,7 +7,7 @@
     {% feed_meta %}
     <meta name="theme-color" content="#fafaf7">
     <link rel="icon" href="{{ '/assets/img/favicons/favicon.svg' | relative_url }}" type="image/svg+xml">
-    <link rel="stylesheet" href="{{ '/assets/css/portfolio.css' | relative_url }}">
+    <link rel="stylesheet" href="{{ '/assets/css/portfolio.css' | relative_url }}?v={{ site.time | date: '%s' }}">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
