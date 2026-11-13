@@ -1,9 +1,12 @@
 ---
-# the default layout is 'page'
-icon: fas fa-info-circle
-order: 4
+title: About me
+permalink: /about/
 ---
 
-I'm an experienced software engineer and engineering manager with nearly a decade of hands-on experience across various tech stacks. I've been part of the early-stage journey of several startups and co-founded some of my own. My approach to software development is pragmatic, prioritizing the delivery of software using battle-tested tools rather than chasing shiny new technologies. I have extensive practical experience in serverless and AWS services, and I'm passionate about improving developer productivity.
+I'm a software engineer and builder based in Tallinn, Estonia. I've worked with early-stage startups and co-founded products. I take a pragmatic approach to building software, with hands-on experience in product development, AWS, serverless architecture, and developer productivity.
 
-Based in beautiful Tallinn and open for remote opportunities.
+I'm currently building [Forkee](https://www.getforkee.com), a shared home for recipes, meal plans, and shopping lists, and [Dakia](https://dakiamail.com), an open-source email client that brings your mailboxes together.
+
+I also run [Mashal Tech](https://mashaltech.ee), my company for consultancy and commercial projects. I work across product engineering and cloud architecture.
+
+Based in Tallinn, Estonia, and open to remote software engineering opportunities. You can reach me at [contact@arsalan.me](mailto:contact@arsalan.me).

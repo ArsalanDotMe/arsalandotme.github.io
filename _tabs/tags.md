@@ -1,5 +1,6 @@
 ---
-layout: tags
-icon: fas fa-tags
-order: 2
+layout: redirect
+permalink: /tags/
+redirect_to: /archives/
+sitemap: false
 ---

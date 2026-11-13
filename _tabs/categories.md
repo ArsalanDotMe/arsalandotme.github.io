@@ -1,5 +1,6 @@
 ---
-layout: categories
-icon: fas fa-stream
-order: 1
+layout: redirect
+permalink: /categories/
+redirect_to: /archives/
+sitemap: false
 ---

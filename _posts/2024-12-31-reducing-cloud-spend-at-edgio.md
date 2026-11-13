@@ -1,19 +1,18 @@
 ---
 layout: post
 title: "Drastically Reducing Cloud Spend at Edgio"
-mermaid: true
 description: "How I managed to achieve more than 90% savings in the cloud spend when I started digging deeper into the architecture of a feature I was working on. These changes allowed Edgio to save hundreds of thousands of dollars for log shipping across all our customers."
 image:
-  path: assets/img/titles/reducing-cloud-spend-title.jpeg
+  path: /assets/img/titles/reducing-cloud-spend-title.jpeg
   alt: Title image for the blog post
 ---
 
-# Brief intro
+## Brief intro
 
 This is my first blog post in what I hope to be a series of blog posts about the some of the more interesting work I've done and things I've learnt. In this post, I'll be talking about how I managed to to achieve **more than 90% savings in the cloud spend** for a specific area of the product at Edgio. These changes allowed [Edgio](https://edg.io/applications/sites/) to save hundreds of thousands of dollars for log shipping across all our customers. I hope it serves as an inspiration for others to look deeper into their cloud architecture and find similar opportunities.
 
 
-# What are Cloud Functions?
+## What are Cloud Functions?
 
 [Cloud Functions](https://edg.io/applications/sites/) (also known as "Sites") is an Edgio feature that allows customers to host serverless Node.js applications, commonly Next.js apps, but it supports virtually any type of Node.js app. While the platform is complex with many components, this blog post will focus on the log shipping and streaming feature.
 
@@ -23,36 +22,17 @@ The system must achieve two primary goals related to logs:
 2. Shipping logs to external log providers or archival storage.
 
 
-# Basic architecture
+## Basic architecture
 
 
 Before diving into the optimizations, it's important to understand the existing architecture for log shipping and streaming. The following diagram illustrates the cloud infrastructure setup for handling logs before any optimizations were made:
 
-```mermaid
-flowchart LR
-  Browser((<header>fa:fa-user Browser</header>))
-  subgraph AWS - Customer Subaccount
-    LSL[Logs Streamer Lambda]
-    WS(Web Socket based API Gateway <br>)
+<figure class="diagram">
+  <a href="{{ '/assets/posts/edgio/architecture-1.svg' | relative_url }}" aria-label="Open full-size diagram: Original log-streaming architecture using CloudWatch and API Gateway"><img src="{{ '/assets/posts/edgio/architecture-1.svg' | relative_url }}" alt="Original log-streaming architecture using CloudWatch and API Gateway" loading="lazy"></a>
+  <figcaption><a href="{{ '/assets/posts/edgio/architecture-1.svg' | relative_url }}">Open full-size diagram <span aria-hidden="true">↗</span></a></figcaption>
+</figure>
 
-    subgraph Lambda
-      UserLambda[<header>User Lambda</header><small>User's App</small>]
-      CloudWatch
-    end
-  end
-
-
-Browser <--> WS
-WS == invokes lambda ==> LSL
-%% Config path
-LSL -. streams logs from CloudWatch .-> CloudWatch
-%% End Config Path
-
-UserLambda --> CloudWatch
-LSL --> WS
-```
-
-#### Data Flow
+### Data Flow
 
 1. When an end-user goes to the edgio console and starts log streaming for one of their deployments, their browser makes a websocket connection to AWS API gateway.
 2. The API gateway invokes the Logs Streamer Lambda which starts up and streams logs from CloudWatch. In practice, it had to stream logs at least 10 seconds in the past because if you query for any more recent logs, there is a chance of missing logs which are not processed yet by CloudWatch. 
@@ -63,43 +43,10 @@ This architecture already fulfills requirement 1 which is to enable real-time st
 
 The first proposed design was an extension of the same system:
 
-```mermaid
-flowchart LR
-  Browser((<header>fa:fa-user Browser</header>))
-  subgraph AWS - Customer Subaccount
-    LSL[Logs Streamer Lambda]
-    WS(Web Socket based API Gateway <br>)
-
-    subgraph Lambda
-      UserLambda[<header>User Lambda</header><small>User's App</small>]
-      CloudWatch
-    end
-  end
-
-Browser <--> WS
-WS == invokes lambda ==> LSL
-%% Config path
-LSL -. streams logs from CloudWatch .-> CloudWatch
-%% End Config Path
-
-UserLambda --> CloudWatch
-LSL --> WS
-
-%% Updated architecture with CloudWatch, Kinesis, and Logs Shipper Lambda
-subgraph Log Shipping
-  KinesisStream((Amazon Kinesis Stream))
-  S3Bucket[[Amazon S3 Bucket]]
-  ShipperLambda[Logs Shipper Lambda]
-  Firehose[Amazon Kinesis Data Firehose]
-end
-
-CloudWatch -. subscription filter .-> KinesisStream
-KinesisStream --> Firehose
-Firehose --> S3Bucket
-KinesisStream --> ShipperLambda
-ShipperLambda --> ExternalDestinations[External Destinations]
-
-```
+<figure class="diagram">
+  <a href="{{ '/assets/posts/edgio/architecture-2.svg' | relative_url }}" aria-label="Open full-size diagram: Proposed log-shipping architecture using CloudWatch, Kinesis, and Firehose"><img src="{{ '/assets/posts/edgio/architecture-2.svg' | relative_url }}" alt="Proposed log-shipping architecture using CloudWatch, Kinesis, and Firehose" loading="lazy"></a>
+  <figcaption><a href="{{ '/assets/posts/edgio/architecture-2.svg' | relative_url }}">Open full-size diagram <span aria-hidden="true">↗</span></a></figcaption>
+</figure>
 
 This design uses the [best practices](https://aws.amazon.com/blogs/architecture/stream-amazon-CloudWatch-logs-to-a-centralized-account-for-audit-and-analysis/) and would be very scalable and easy to maintain once setup. 
 
@@ -107,7 +54,7 @@ This design uses the [best practices](https://aws.amazon.com/blogs/architecture/
 
 BUT, here's why I felt unsatisfied with the whole architecture. I was going through the cloud spend for one of our enterprise accounts and it almost caused me physical pain to see that we were paying $10,000+ just for CloudWatch data processing fees per month. We were not even using CloudWatch to query the logs, setup alerts or collect metrics. CloudWatch was literally just the default medium of transport and it pained me to see that it cost so much. 
 
-# Rethinking the whole architecture
+## Rethinking the whole architecture
 
 I stepped back a little bit and questioned whether we could find some other medium of collecting and transporting logs that was cheaper than using CloudWatch. The solution had to support both the real-time log streaming usecase and the log shipping usecase, and the added complexity of any other solution would be clearly worth-it only if I could reduce costs by 40% or more. The performance must also not degrade for the existing real-time log streaming feature. 
 
@@ -116,7 +63,7 @@ I stepped back a little bit and questioned whether we could find some other medi
 I started researching alternate ways to collect the logs from the lambda function and came across a very powerful feature called [Lambda Extensions](https://docs.aws.amazon.com/lambda/latest/dg/lambda-extensions.html). In short, a Lambda Extension is a piece of software that you can inject into the Lambda function which shares the resources of the lambda but can have a more extended lifetime. More importantly, it has access to some exclusive APIs including the logs API which delivers logs generated from the main lambda process to the Lambda Extension. 
 
 
-![Lambda Extension Lifetime Overview](assets/posts/Lambda-Extensions-Overview.png)
+![Lambda Extension Lifetime Overview]({{ '/assets/posts/Lambda-Extensions-Overview.png' | relative_url }})
 _Overview of Lambda Extensions Lifetime_
 
 
@@ -161,27 +108,10 @@ Once the logs are in SQS, the rest is simple. There is a Logs Shipper Lambda tha
 
 Here's the updated architecture:
 
-```mermaid
-flowchart LR
-  subgraph AWS - Customer Subaccount
-    LogsQueue[(<header>SQS</header>)]
-    LogsShipperLambda[Logs Shipper Lambda]
-
-    subgraph Lambda
-      UserLambda[<header>User Lambda</header><small>User's App</small>]
-      LogsCollectorExtension(<header>Logs Collector Extension</header><small>It pushes logs to SQS if the buffer limit <br> of 64KB is reached or if shutdown event is received</small>)
-    end
-
-    S3[(<header>S3</header>)]
-  end
-
-UserLambda -- Logs are pushed every 50ms --> LogsCollectorExtension
-LogsCollectorExtension --> LogsQueue
-LogsQueue -- Lambda is invoked with batches of SQS messages --> LogsShipperLambda
-LogsShipperLambda --> S3
-LogsShipperLambda --> ExternalDestinations[External Destinations]
-
-```
+<figure class="diagram">
+  <a href="{{ '/assets/posts/edgio/architecture-3.svg' | relative_url }}" aria-label="Open full-size diagram: Lower-cost log-shipping architecture using a Lambda extension, SQS, and S3"><img src="{{ '/assets/posts/edgio/architecture-3.svg' | relative_url }}" alt="Lower-cost log-shipping architecture using a Lambda extension, SQS, and S3" loading="lazy"></a>
+  <figcaption><a href="{{ '/assets/posts/edgio/architecture-3.svg' | relative_url }}">Open full-size diagram <span aria-hidden="true">↗</span></a></figcaption>
+</figure>
 
 This architecture has a few problems like variable latency depending on the amount of logs generated (latency is reduced for high throughput of logs, and latency could be quite high for low throughput) but it cannot be argued that this architecture is extremely cheap. The main cost components are SQS and the logs shipper lambda. If we're just comparing cost of the logs shipping medium, to ship the same amount of logs, SQS gives us a cost saving of over 95%. It is practically free compared to CloudWatch!
 
@@ -197,35 +127,10 @@ So, I came up with an architecture that adds the required delay (about 30-80ms i
 
 Here's the new architecture.
 
-```mermaid
-flowchart LR
-  Browser((<header>fa:fa-user Browser</header>))
-  subgraph AWS - Customer Subaccount
-    LSL[Logs Streamer Lambda]
-    WS(Web Socket based API Gateway <br> <small>Provided by the console</small>)
-
-    subgraph Lambda
-      UserLambda[<header>User Lambda</header><small>User's App</small>]
-      LogsCollectorExtension(<header>Logs Collector Extension</header><small>It continuosly writes all logs to DynamoDB if log streaming is enabled</small>)
-    end
-
-    LiveLogsTable[(<header>Live Logs Table</header><small>DynamoDB</small>)]
-    ConfigurationTable[(<header>Configuration Table</header><small>DynamoDB</small>)]
-  end
-
-
-Browser <--> WS
-WS == invokes lambda ==> LSL
-%% Config path
-LSL -. sets live streaming to enabled .-> ConfigurationTable
-LogsCollectorExtension -. lazy loads configuration on each invoke .-> ConfigurationTable
-%% End Config Path
-
-UserLambda -- Logs are pushed every 50ms --> LogsCollectorExtension
-LogsCollectorExtension --> LiveLogsTable
-LiveLogsTable --> LSL
-LSL --> WS
-```
+<figure class="diagram">
+  <a href="{{ '/assets/posts/edgio/architecture-4.svg' | relative_url }}" aria-label="Open full-size diagram: On-demand live log-streaming architecture using DynamoDB and API Gateway"><img src="{{ '/assets/posts/edgio/architecture-4.svg' | relative_url }}" alt="On-demand live log-streaming architecture using DynamoDB and API Gateway" loading="lazy"></a>
+  <figcaption><a href="{{ '/assets/posts/edgio/architecture-4.svg' | relative_url }}">Open full-size diagram <span aria-hidden="true">↗</span></a></figcaption>
+</figure>
 
 ### How it works
 
@@ -241,7 +146,7 @@ This system works brilliantly because it activates only when needed and turns of
 
 There is a cost for checking the configuration table for whether or not log streaming is enabled but with some debouncing and caching, the cost remains in single digits even for our larger customers and there is almost no noticeable cost for using the log streaming table because the feature is used sparingly. 
 
-# Conclusion
+## Conclusion
 
 The cloud is also a casino. You can often not predict what the bill is going to be like at the end of the day and there are almost always unexpected costs. In this case, the cost of CloudWatch was very high for our usecase and by thinking out of the box, I managed to come up with a new architecture that achieved hundreds of thousands of dollars in cost savings for the company per year. 
 

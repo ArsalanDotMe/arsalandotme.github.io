@@ -64,6 +64,8 @@ main() {
   bundle exec htmlproofer "$SITE_DIR" \
     --disable-external \
     --ignore-urls "/^http:\/\/127.0.0.1/,/^http:\/\/0.0.0.0/,/^http:\/\/localhost/"
+
+  node tools/check-site.mjs
 }
 
 while (($#)); do

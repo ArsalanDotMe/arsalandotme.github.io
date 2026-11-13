@@ -1,0 +1,27 @@
+flowchart LR
+  Browser((Browser))
+  subgraph AWS - Customer Subaccount
+    LSL[Logs Streamer Lambda]
+    WS(Web Socket based API Gateway <br> Provided by the console)
+
+    subgraph Lambda
+      UserLambda[User Lambda<br/>User's App]
+      LogsCollectorExtension(Logs Collector Extension<br/>It continuosly writes all logs to DynamoDB if log streaming is enabled)
+    end
+
+    LiveLogsTable[(Live Logs Table<br/>DynamoDB)]
+    ConfigurationTable[(Configuration Table<br/>DynamoDB)]
+  end
+
+
+Browser <--> WS
+WS == invokes lambda ==> LSL
+%% Config path
+LSL -. sets live streaming to enabled .-> ConfigurationTable
+LogsCollectorExtension -. lazy loads configuration on each invoke .-> ConfigurationTable
+%% End Config Path
+
+UserLambda -- Logs are pushed every 50ms --> LogsCollectorExtension
+LogsCollectorExtension --> LiveLogsTable
+LiveLogsTable --> LSL
+LSL --> WS

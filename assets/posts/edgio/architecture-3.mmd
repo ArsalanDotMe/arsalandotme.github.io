@@ -1,0 +1,18 @@
+flowchart LR
+  subgraph AWS - Customer Subaccount
+    LogsQueue[(SQS)]
+    LogsShipperLambda[Logs Shipper Lambda]
+
+    subgraph Lambda
+      UserLambda[User Lambda<br/>User's App]
+      LogsCollectorExtension(Logs Collector Extension<br/>It pushes logs to SQS if the buffer limit <br> of 64KB is reached or if shutdown event is received)
+    end
+
+    S3[(S3)]
+  end
+
+UserLambda -- Logs are pushed every 50ms --> LogsCollectorExtension
+LogsCollectorExtension --> LogsQueue
+LogsQueue -- Lambda is invoked with batches of SQS messages --> LogsShipperLambda
+LogsShipperLambda --> S3
+LogsShipperLambda --> ExternalDestinations[External Destinations]

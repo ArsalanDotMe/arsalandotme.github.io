@@ -1,8 +1,7 @@
 {
   "name": "arsalandotme-github-io",
   "version": "1.0.0",
-  "description": "Personal website built with Jekyll and Chirpy theme",
-  "main": "index.js",
+  "description": "Personal portfolio and writing, built with Jekyll",
   "scripts": {
     "dev": "bundle exec jekyll serve --livereload",
     "build": "bundle exec jekyll build",
@@ -10,9 +9,9 @@
   },
   "keywords": [
     "jekyll",
-    "blog",
-    "chirpy"
+    "portfolio",
+    "blog"
   ],
   "author": "",
   "license": "MIT"
-} 
+}

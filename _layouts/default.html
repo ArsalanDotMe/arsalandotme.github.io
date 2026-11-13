@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% seo %}
+    {% feed_meta %}
+    <meta name="theme-color" content="#fafaf7">
+    <link rel="icon" href="{{ '/assets/img/favicons/favicon.svg' | relative_url }}" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ '/assets/css/portfolio.css' | relative_url }}">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="page">
+      <header class="site-header">
+        <a class="name" href="{{ '/' | relative_url }}">Arsalan Ahmad<span class="name-period">.</span></a>
+        <nav aria-label="Main navigation">
+          <a href="{{ '/#work' | relative_url }}">Work</a>
+          <a href="{{ '/about/' | relative_url }}">About</a>
+          <a href="{{ '/archives/' | relative_url }}"{% if page.url == '/archives/' or page.layout == 'post' %} aria-current="page"{% endif %}>Writing</a>
+          <a class="contact-link" href="mailto:{{ site.social.email }}">Get in touch <span aria-hidden="true">↗</span></a>
+        </nav>
+      </header>
+
+      <main id="main" tabindex="-1">
+{{ content }}
+      </main>
+
+      <footer class="site-footer">
+        <span>© {{ 'now' | date: '%Y' }} Arsalan Ahmad</span>
+        <nav aria-label="More about Arsalan"><a href="https://github.com/{{ site.github.username }}">GitHub <span aria-hidden="true">↗</span></a><a href="https://www.linkedin.com/in/ahmadarsalan">LinkedIn <span aria-hidden="true">↗</span></a><a href="{{ '/feed.xml' | relative_url }}">RSS</a></nav>
+      </footer>
+    </div>
+  </body>
+</html>

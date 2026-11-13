@@ -1,73 +1,32 @@
-# Chirpy Starter
+# Arsalan Ahmad's website
 
-[![Gem Version](https://img.shields.io/gem/v/jekyll-theme-chirpy)][gem]&nbsp;
-[![GitHub license](https://img.shields.io/github/license/cotes2020/chirpy-starter.svg?color=blue)][mit]
+Personal portfolio and writing at https://arsalan.me, built with Jekyll and a shared local layout. The homepage, About page, writing index, article, and 404 page use the same design.
 
-When installing the [**Chirpy**][chirpy] theme through [RubyGems.org][gem], Jekyll can only read files in the folders
-`_data`, `_layouts`, `_includes`, `_sass` and `assets`, as well as a small part of options of the `_config.yml` file
-from the theme's gem. If you have ever installed this theme gem, you can use the command
-`bundle info --path jekyll-theme-chirpy` to locate these files.
+## Local preview
 
-The Jekyll team claims that this is to leave the ball in the user's court, but this also results in users not being
-able to enjoy the out-of-the-box experience when using feature-rich themes.
-
-To fully use all the features of **Chirpy**, you need to copy the other critical files from the theme's gem to your
-Jekyll site. The following is a list of targets:
-
-```shell
-.
-├── _config.yml
-├── _plugins
-├── _tabs
-└── index.html
+```sh
+bundle install
+bundle exec jekyll serve --host 127.0.0.1 --port 4040
 ```
 
-To save you time, and also in case you lose some files while copying, we extract those files/configurations of the
-latest version of the **Chirpy** theme and the [CD][CD] workflow to here, so that you can start writing in minutes.
+## Verification
 
-## Usage
+```sh
+bash tools/test.sh
+```
 
-Check out the [theme's docs](https://github.com/cotes2020/jekyll-theme-chirpy/wiki).
+This builds the site, checks internal links and assets, and verifies the original article, legacy routes, feed, and service-worker retirement.
 
-## Local Development
+## Article diagrams
 
-To run this Jekyll site locally:
+The original Mermaid definitions live beside the rendered SVGs in `assets/posts/edgio/`. SVGs are checked in so the public site needs no diagram runtime. To regenerate a diagram with Mermaid CLI:
 
-1. Install the dependencies:
-   ```shell
-   bundle install
-   ```
+```sh
+npx --package @mermaid-js/mermaid-cli mmdc -i assets/posts/edgio/architecture-1.mmd -o assets/posts/edgio/architecture-1.svg -c tools/mermaid-config.json -b transparent
+```
 
-2. Start the Jekyll server:
-   ```shell
-   bundle exec jekyll serve --livereload
-   ```
-   
-   Alternatively, you can use npm:
-   ```shell
-   npm run dev
-   ```
+The article remains at `/posts/reducing-cloud-spend-at-edgio/`. Writing uses `/archives/`; the old category and tag routes redirect there. The original private career information and privacy pages remain at their existing URLs.
 
-3. Access the site at:
-   ```
-   http://127.0.0.1:4000/
-   ```
+`sw.min.js` retires the former theme's offline worker and removes only its `chirpy-` caches. Keep that URL available for returning visitors.
 
-The server is running with live reload enabled, so any changes you make to your files will automatically refresh the browser. Press Ctrl+C in the terminal when you want to stop the server.
-
-Additional npm scripts:
-- `npm run build`: Build the site for production
-- `npm run clean`: Clean the generated site files
-
-## Contributing
-
-This repository is automatically updated with new releases from the theme repository. If you encounter any issues or want to contribute to its improvement, please visit the [theme repository][chirpy] to provide feedback.
-
-## License
-
-This work is published under [MIT][mit] License.
-
-[gem]: https://rubygems.org/gems/jekyll-theme-chirpy
-[chirpy]: https://github.com/cotes2020/jekyll-theme-chirpy/
-[CD]: https://en.wikipedia.org/wiki/Continuous_deployment
-[mit]: https://github.com/cotes2020/chirpy-starter/blob/master/LICENSE
+GitHub Pages deployment runs only when changes are pushed to the configured main branch or the deployment workflow is manually triggered.

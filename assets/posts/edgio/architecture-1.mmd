@@ -1,0 +1,21 @@
+flowchart LR
+  Browser((Browser))
+  subgraph AWS - Customer Subaccount
+    LSL[Logs Streamer Lambda]
+    WS(Web Socket based API Gateway <br>)
+
+    subgraph Lambda
+      UserLambda[User Lambda<br/>User's App]
+      CloudWatch
+    end
+  end
+
+
+Browser <--> WS
+WS == invokes lambda ==> LSL
+%% Config path
+LSL -. streams logs from CloudWatch .-> CloudWatch
+%% End Config Path
+
+UserLambda --> CloudWatch
+LSL --> WS

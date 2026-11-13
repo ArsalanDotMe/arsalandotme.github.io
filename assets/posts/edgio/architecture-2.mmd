@@ -1,0 +1,34 @@
+flowchart LR
+  Browser((Browser))
+  subgraph AWS - Customer Subaccount
+    LSL[Logs Streamer Lambda]
+    WS(Web Socket based API Gateway <br>)
+
+    subgraph Lambda
+      UserLambda[User Lambda<br/>User's App]
+      CloudWatch
+    end
+  end
+
+Browser <--> WS
+WS == invokes lambda ==> LSL
+%% Config path
+LSL -. streams logs from CloudWatch .-> CloudWatch
+%% End Config Path
+
+UserLambda --> CloudWatch
+LSL --> WS
+
+%% Updated architecture with CloudWatch, Kinesis, and Logs Shipper Lambda
+subgraph Log Shipping
+  KinesisStream((Amazon Kinesis Stream))
+  S3Bucket[[Amazon S3 Bucket]]
+  ShipperLambda[Logs Shipper Lambda]
+  Firehose[Amazon Kinesis Data Firehose]
+end
+
+CloudWatch -. subscription filter .-> KinesisStream
+KinesisStream --> Firehose
+Firehose --> S3Bucket
+KinesisStream --> ShipperLambda
+ShipperLambda --> ExternalDestinations[External Destinations]
