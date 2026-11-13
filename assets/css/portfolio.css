@@ -45,7 +45,8 @@ p { text-wrap: pretty; }
 .hero { display: grid; grid-template-columns: 1.5fr 1fr; align-items: center; gap: 70px; padding: 78px 0 88px; }
 h1 { font-size: clamp(4rem, 7.6vw, 6.25rem); line-height: 1.04; letter-spacing: -.065em; }
 .hero-about { max-width: 345px; justify-self: end; font-size: 1.03rem; }
-.portrait { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; margin-bottom: 20px; }
+.portrait { display: block; width: 104px; height: 104px; border-radius: 50%; overflow: hidden; margin-bottom: 20px; }
+.portrait img { width: 140%; height: 140%; max-width: none; transform: translate(-16%, -12%); }
 .hero-about p + p { margin-top: 12px; font-size: .93rem; }
 .text-link { display: inline-block; font-size: .86rem; font-weight: 550; }
 .text-link span { display: inline-block; margin-left: 8px; transition: transform .25s; }
@@ -150,7 +151,7 @@ a:hover .text-link span, .text-link:hover span { transform: translate(2px, -2px)
   .hero { grid-template-columns: 1fr; gap: 32px; padding: 48px 0 50px; }
   h1 { font-size: clamp(3.6rem, 12vw, 5rem); }
   .hero-about { max-width: 420px; justify-self: start; }
-  .portrait { float: left; margin: 2px 16px 8px 0; width: 55px; height: 55px; }
+  .portrait { float: left; margin: 2px 16px 8px 0; width: 72px; height: 72px; }
   .hero-about p + p { clear: both; padding-top: 8px; }
   .profile-links { margin-top: 16px; }
   .section-heading { display: block; margin-bottom: 20px; }
