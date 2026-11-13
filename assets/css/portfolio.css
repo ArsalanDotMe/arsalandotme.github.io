@@ -72,6 +72,8 @@ a:hover .text-link span, .text-link:hover span { transform: translate(2px, -2px)
 .project-heading h3 span { font-size: 1.1rem; margin-left: 5px; }
 .project-heading > span { font-size: .74rem; color: var(--muted); }
 .project > p { font-size: .9rem; color: var(--muted); margin-top: 10px; max-width: 430px; }
+.other-projects { max-width: 780px; margin-top: 32px; color: var(--muted); font-size: .88rem; }
+.other-projects a { color: var(--ink); font-weight: 600; text-decoration: underline; }
 .companies { margin-top: 64px; padding-top: 36px; border-top: 1px solid var(--line); }
 .company-logos { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 28px 24px; list-style: none; padding: 0; margin: 0; }
 .company-logos li { flex: 0 0 120px; }
